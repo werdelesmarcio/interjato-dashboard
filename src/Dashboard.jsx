@@ -138,6 +138,7 @@ export default function Dashboard({ user, onLogout }) {
       padding: '1.5rem',
       overflowY: 'auto'
     }}>
+      
       <div style={{ paddingBottom: '1.5rem', marginBottom: '1.5rem', borderBottom: '1px solid #1E2836' }}>
          <div className="mono" style={{ fontSize: 14, letterSpacing: "0.1em", color: "#FF8F3D", fontWeight: 700 }}>SGI · INTERJATO</div>
          <div className="mono" style={{ fontSize: 10, color: "#56667A" }}>ISO/IEC 27001 · 20000-1</div>
