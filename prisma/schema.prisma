@@ -1,0 +1,63 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:../.data/sgi.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("user")
+  mfaEnabled   Boolean  @default(false)
+  mfaSecret    String?
+}
+
+model Document {
+  id           String   @id
+  title        String
+  category     String
+  icon         String
+  rev          String
+  date         String
+  approvedBy   String   @default("Não identificado")
+  approverRole String?
+  needsReview  Boolean  @default(true)
+  contentHtml  String
+  sourceFile   String
+  sourceHash   String
+  updatedAt    DateTime @updatedAt
+}
+
+model AuditLog {
+  id           Int      @id @default(autoincrement())
+  key          String   @unique
+  type         String
+  documentId   String
+  documentName String
+  actor        String
+  date         String
+  status       String
+  details      String
+  createdAt    DateTime @default(now())
+}
+
+model NonConformity {
+  id               Int      @id @default(autoincrement())
+  documentId       String
+  documentName     String
+  auditorName      String
+  description      String
+  date             String
+  status           String   @default("Pendente") // "Pendente", "Tratada", "Aprovada"
+  treatmentDesc    String?  // Explicação do tratamento pelo operador
+  treatmentDate    String?
+  operatorName     String?
+  approvalDate     String?
+  approverName     String?
+  createdAt        DateTime @default(now())
+}
