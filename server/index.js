@@ -876,6 +876,18 @@ app.post("/api/documents/:id/auditor-viewed", verifyToken, async (req, res) => {
   }
 });
 
+// ==========================================
+// Servir Frontend Compilado (React)
+// ==========================================
+
+// Servir arquivos estáticos do frontend compilado
+app.use(express.static(path.join(root, "dist")));
+
+// SPA Fallback: Qualquer rota não encontrada retorna index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(root, "dist", "index.html"));
+});
+
 app.listen(port, () => {
   console.log(`API SGI documental disponível em http://localhost:${port}`);
 });
