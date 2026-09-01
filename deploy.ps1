@@ -140,7 +140,7 @@ Write-Host ""
 Write-Step 4 "Instalando dependências..."
 
 try {
-    & npm install --production 2>&1 | Out-Null
+    & npm install 2>&1 | Out-Null
     Write-Success "Dependências instaladas"
 } catch {
     Write-Error-Custom "Erro ao instalar dependências: $_"
