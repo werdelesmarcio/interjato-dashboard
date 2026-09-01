@@ -64,10 +64,7 @@ export default function Login({ onLoginSuccess }) {
           </p>
         </div>
         <footer className="app-footer" style={{ position: 'absolute', bottom: '2rem', left: '4rem', right: 'auto', textAlign: 'left' }}>
-          <div>Desenvolvido pela Equipe de SOC Grupo Interjato · 2026</div>
-          <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span>Licenciado sob <a href="https://creativecommons.org/licenses/by/4.0/deed.pt_BR" target="_blank" rel="noreferrer" style={{ color: '#38bdf8', textDecoration: 'underline' }}>Creative Commons</a>.</span>
-          </div>
+          <div>Desenvolvido pela Equipe de SOC do Grupo Interjato · 2026 (c)</div>
         </footer>
       </div>
       

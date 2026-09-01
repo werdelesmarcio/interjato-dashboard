@@ -22,6 +22,14 @@ const reviewStatus = (dateStr) => {
   return { label: "Revisão atrasada" };
 };
 
+const roleLabels = {
+  admin: "Administrador",
+  auditor: "Auditor",
+  operador: "Operador",
+  operator: "Operador",
+  user: "Usuário",
+};
+
 const NavLink = ({ to, icon: Icon, children }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
@@ -363,7 +371,7 @@ export default function Dashboard({ user, onLogout }) {
           <User size={20} color="#FF8F3D"/>
           <div>
             <div style={{ fontSize: 14,fontWeight: 500, color: '#E7ECF2' }}>{user.name}</div>
-            <div style={{ fontSize: 12, color: '#8FA0B3' }}>{user.role}</div>
+            <div style={{ fontSize: 12, color: '#8FA0B3' }}>{roleLabels[user.role] || "Usuário"}</div>
           </div>
         </div>
         
