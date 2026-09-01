@@ -884,7 +884,7 @@ app.post("/api/documents/:id/auditor-viewed", verifyToken, async (req, res) => {
 app.use(express.static(path.join(root, "dist")));
 
 // SPA Fallback: Qualquer rota não encontrada retorna index.html
-app.get("*", (req, res) => {
+app.get("/*", (req, res) => {
   res.sendFile(path.join(root, "dist", "index.html"));
 });
 
