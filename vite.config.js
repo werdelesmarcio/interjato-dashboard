@@ -5,6 +5,9 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: {
+    watch: {
+      ignored: ['**/documents/**'],
+    },
     proxy: {
       "/api": "http://localhost:3001",
     },

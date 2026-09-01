@@ -149,6 +149,23 @@ async function rebuildCatalog() {
   console.log(`Catálogo atualizado via SQLite: ${activeIds.length} documento(s) ativos.`);
 }
 
+let catalogRebuildPromise = Promise.resolve();
+let catalogRebuildTimer;
+
+function queueCatalogRebuild() {
+  catalogRebuildPromise = catalogRebuildPromise
+    .catch(() => undefined)
+    .then(() => rebuildCatalog())
+    .catch((error) => console.error("Falha ao atualizar o catálogo documental:", error.message));
+
+  return catalogRebuildPromise;
+}
+
+function scheduleCatalogRebuild() {
+  clearTimeout(catalogRebuildTimer);
+  catalogRebuildTimer = setTimeout(queueCatalogRebuild, 1000);
+}
+
 async function collectFiles(directory) {
   const entries = await fs.readdir(directory, { withFileTypes: true });
   const files = [];
@@ -750,18 +767,20 @@ app.get("/api/health", (_request, response) => {
   response.json({ ok: true });
 });
 
-const watcher = chokidar.watch(documentsRoot, { ignoreInitial: true });
-watcher.on("add", rebuildCatalog).on("change", rebuildCatalog).on("unlink", rebuildCatalog);
+const watcher = chokidar.watch(documentsRoot, {
+  ignoreInitial: true,
+  awaitWriteFinish: { stabilityThreshold: 1000, pollInterval: 100 },
+});
+watcher
+  .on("add", scheduleCatalogRebuild)
+  .on("change", scheduleCatalogRebuild)
+  .on("unlink", scheduleCatalogRebuild)
+  .on("error", (error) => console.error("Erro ao observar documentos:", error.message));
 
 // Servir arquivos estáticos do frontend em produção
 if (process.env.NODE_ENV === 'production') {
   const buildPath = path.resolve(root, 'dist');
   app.use(express.static(buildPath));
-
-  // Rota catch-all para servir o index.html para o roteamento do React
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(buildPath, 'index.html'));
-  });
 }
 
 
