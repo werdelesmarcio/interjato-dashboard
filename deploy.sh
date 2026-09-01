@@ -68,7 +68,7 @@ echo ""
 
 # PASSO 4: Instalar dependências
 echo -e "${GREEN}📚 PASSO 4: Instalando dependências...${NC}"
-npm install --production
+npm install
 echo -e "${GREEN}✅ Dependências instaladas${NC}"
 
 echo ""
