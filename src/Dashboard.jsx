@@ -58,6 +58,7 @@ export default function Dashboard({ user, onLogout }) {
   const [ncDescription, setNcDescription] = useState("");
   const [ncIsSubmitting, setNcIsSubmitting] = useState(false);
   const [showDelayedAlert, setShowDelayedAlert] = useState(false);
+  const [isApprovingDoc, setIsApprovingDoc] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,18 +98,223 @@ export default function Dashboard({ user, onLogout }) {
     };
   }, []);
 
-  const handleApprove = async (docId) => { /* ... */ };
-  const handleDisapprove = async (docId) => { /* ... */ };
-  const toggleRead = async (id, e) => { /* ... */ };
-  const handleAuditorView = async (id, title, e) => { /* ... */ };
-  const handleSaveNonConformity = async (e) => { /* ... */ };
+  const handleApprove = async (docId) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/documents/${docId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error('Erro ao aprovar documento');
+      
+      // Recarregar documentos
+      const docsRes = await fetch('/api/documents', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (docsRes.ok) setDocuments(await docsRes.json());
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro ao aprovar documento: ' + error.message);
+    }
+  };
+
+  const handleDisapprove = async (docId) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/documents/${docId}/disapprove`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error('Erro ao desaprovar documento');
+      
+      // Recarregar documentos
+      const docsRes = await fetch('/api/documents', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (docsRes.ok) setDocuments(await docsRes.json());
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro ao desaprovar documento: ' + error.message);
+    }
+  };
+
+  const toggleRead = async (id, e) => {
+    e.stopPropagation();
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/documents/${id}/review`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error('Erro ao marcar revisão');
+      
+      // Recarregar documentos
+      const docsRes = await fetch('/api/documents', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (docsRes.ok) setDocuments(await docsRes.json());
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro ao marcar revisão: ' + error.message);
+    }
+  };
+
+  const handleAuditorView = async (id, title, e) => {
+    e.stopPropagation();
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/documents/${id}/review`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error('Erro ao marcar documento como visualizado');
+      
+      // Recarregar documentos
+      const docsRes = await fetch('/api/documents', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (docsRes.ok) setDocuments(await docsRes.json());
+      
+      alert('✓ Documento marcado como visualizado pelo auditor');
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro: ' + error.message);
+    }
+  };
+
+  const handleSaveNonConformity = async (e) => {
+    e.preventDefault();
+    if (!ncDescription.trim()) {
+      alert('Descrição obrigatória');
+      return;
+    }
+    
+    setNcIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('/api/non-conformities', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          documentId: ncDocument.id,
+          documentName: ncDocument.title,
+          description: ncDescription
+        })
+      });
+      
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || 'Erro ao registrar não-conformidade');
+      }
+      
+      alert('✓ Não-conformidade registrada com sucesso');
+      setNcDocument(null);
+      setNcDescription('');
+      
+      // Recarregar não-conformidades
+      const token2 = localStorage.getItem('authToken');
+      const ncRes = await fetch('/api/non-conformities', { headers: { 'Authorization': `Bearer ${token2}` } });
+      if (ncRes.ok) setNonConformities(await ncRes.json());
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro: ' + error.message);
+    } finally {
+      setNcIsSubmitting(false);
+    }
+  };
+
+  const approveDocumentByUser = async (docId) => {
+    setIsApprovingDoc(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/documents/${docId}/user-approve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) throw new Error('Erro ao aprovar revisão');
+      
+      alert('✓ Revisão aprovada com sucesso');
+      
+      // Recarregar documentos
+      const docsRes = await fetch('/api/documents', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (docsRes.ok) setDocuments(await docsRes.json());
+      setSelected(null);
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro: ' + error.message);
+    } finally {
+      setIsApprovingDoc(false);
+    }
+  };
+
+  const disapproveDocumentByUser = async (docId) => {
+    setIsApprovingDoc(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/documents/${docId}/user-disapprove`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) throw new Error('Erro ao desaprovar revisão');
+      
+      alert('✓ Revisão desaprovada');
+      
+      // Recarregar documentos
+      const docsRes = await fetch('/api/documents', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (docsRes.ok) setDocuments(await docsRes.json());
+      setSelected(null);
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro: ' + error.message);
+    } finally {
+      setIsApprovingDoc(false);
+    }
+  };
+
+  const markDocumentViewedByAuditor = async (docId) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/documents/${docId}/auditor-viewed`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) throw new Error('Erro ao marcar documento como visto');
+      
+      // Recarregar documentos
+      const docsRes = await fetch('/api/documents', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (docsRes.ok) setDocuments(await docsRes.json());
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro: ' + error.message);
+    }
+  };
 
   const contextValue = {
     documents, auditLogs, nonConformities, user,
     selected, setSelected, ncDocument, setNcDocument,
     ncDescription, setNcDescription, ncIsSubmitting,
     handleApprove, handleDisapprove, toggleRead,
-    handleAuditorView, handleSaveNonConformity
+    handleAuditorView, handleSaveNonConformity,
+    approveDocumentByUser, disapproveDocumentByUser, markDocumentViewedByAuditor
   };
 
   return (
@@ -203,6 +409,155 @@ export default function Dashboard({ user, onLogout }) {
 
     {/* Visualizador do documento selecionado */}
     <DocumentViewer key={selected?.id} document={selected} onClose={() => setSelected(null)} />
+
+    {/* Modal de Não-Conformidade */}
+    {ncDocument && (
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0, 0, 0, 0.7)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}>
+        <div style={{
+          background: '#121821',
+          border: '1px solid #1E2836',
+          borderRadius: 12,
+          padding: '24px',
+          width: '90%',
+          maxWidth: '500px',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          boxShadow: '0 20px 25px rgba(0, 0, 0, 0.5)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#E7ECF2' }}>Registrar Não-Conformidade</h2>
+            <button
+              onClick={() => setNcDocument(null)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#8FA0B3',
+                cursor: 'pointer',
+                fontSize: 24
+              }}
+            >
+              ×
+            </button>
+          </div>
+
+          <form onSubmit={handleSaveNonConformity}>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: 12, color: '#8FA0B3', marginBottom: '6px', fontWeight: 500 }}>
+                Documento Afetado
+              </label>
+              <input
+                type="text"
+                value={ncDocument?.title || ''}
+                disabled
+                style={{
+                  width: '100%',
+                  background: '#1B2530',
+                  border: '1px solid #1E2836',
+                  borderRadius: 6,
+                  padding: '10px 12px',
+                  color: '#8FA0B3',
+                  fontSize: 12
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: 12, color: '#8FA0B3', marginBottom: '6px', fontWeight: 500 }}>
+                ID do Documento
+              </label>
+              <input
+                type="text"
+                value={ncDocument?.id || ''}
+                disabled
+                style={{
+                  width: '100%',
+                  background: '#1B2530',
+                  border: '1px solid #1E2836',
+                  borderRadius: 6,
+                  padding: '10px 12px',
+                  color: '#8FA0B3',
+                  fontSize: 12
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: 12, color: '#8FA0B3', marginBottom: '6px', fontWeight: 500 }}>
+                Descrição da Não-Conformidade (máx. 5000 caracteres)
+              </label>
+              <textarea
+                value={ncDescription}
+                onChange={(e) => setNcDescription(e.target.value)}
+                placeholder="Descreva detalhadamente o desvio ou não-conformidade encontrada..."
+                maxLength={5000}
+                rows={6}
+                style={{
+                  width: '100%',
+                  background: '#1B2530',
+                  border: '1px solid #1E2836',
+                  borderRadius: 6,
+                  padding: '10px 12px',
+                  color: '#E7ECF2',
+                  fontSize: 12,
+                  fontFamily: "'Oxanium', sans-serif",
+                  outline: 'none',
+                  resize: 'vertical'
+                }}
+              />
+              <div style={{ fontSize: 10, color: '#56667A', marginTop: '4px', textAlign: 'right' }}>
+                {ncDescription.length} / 5000
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="submit"
+                disabled={ncIsSubmitting}
+                style={{
+                  flex: 1,
+                  background: '#FF5D5D',
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '10px',
+                  color: '#0A0E13',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: ncIsSubmitting ? 'not-allowed' : 'pointer',
+                  opacity: ncIsSubmitting ? 0.5 : 1
+                }}
+              >
+                {ncIsSubmitting ? 'Salvando...' : 'Registrar Não-Conformidade'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setNcDocument(null)}
+                style={{
+                  flex: 1,
+                  background: '#1B2530',
+                  border: '1px solid #33445A',
+                  borderRadius: 6,
+                  padding: '10px',
+                  color: '#8FA0B3',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
   </div>
 </DashboardContext.Provider>
   );

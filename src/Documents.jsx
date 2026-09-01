@@ -29,6 +29,51 @@ const reviewStatus = (dateStr) => {
     return { label: "Revisão atrasada", color: "#FF5D5D" };
 };
 
+const getDocumentStatus = (doc) => {
+  // Se tem não-conformidade aguardando ajustes
+  if (doc.hasNonConformity && !doc.nonConformityResolvedAt) {
+    return {
+      label: "Aguardando ajustes de Não-Conformidade",
+      color: "#FFC24D",
+      borderColor: "#FFC24D"
+    };
+  }
+
+  // Se foi resolvida a NC ou auditor viu e aprovou
+  if (doc.auditorViewedAt) {
+    return {
+      label: "Aprovado para a ISO",
+      color: "#2FD9A8",
+      borderColor: "#2FD9A8"
+    };
+  }
+
+  // Se está aguardando vistas do auditor
+  if (doc.approvedBy !== "Não identificado" && !doc.auditorViewedAt) {
+    return {
+      label: "Aguardando Vistas do Auditor",
+      color: "#4FA3FF",
+      borderColor: "#4FA3FF"
+    };
+  }
+
+  // Se está aguardando aprovação do usuário
+  if (doc.needsReview === false && doc.approvedBy === "Não identificado") {
+    return {
+      label: "Aguardando Aprovação",
+      color: "#FFC24D",
+      borderColor: "#FFC24D"
+    };
+  }
+
+  // Se está aguardando revisão do operador
+  return {
+    label: "Aguardando revisão",
+    color: "#FF8F3D",
+    borderColor: "#1E2836"
+  };
+};
+
 export default function Documents() {
   const { documents, user, setSelected, handleAuditorView, toggleRead, setNcDocument } = useContext(DashboardContext);
   const [query, setQuery] = useState("");
@@ -118,7 +163,9 @@ export default function Documents() {
                     className="plan-card"
                     onClick={() => setSelected(plan)}
                     style={{
-                      background: "#121821", border: "1px solid #1E2836", borderRadius: 10,
+                      background: "#121821", 
+                      border: `2px solid ${getDocumentStatus(plan).borderColor}`, 
+                      borderRadius: 10,
                       padding: "16px", cursor: "pointer", transition: "all 0.12s ease", display: "flex", flexDirection: "column", gap: 12,
                     }}
                   >
@@ -134,11 +181,15 @@ export default function Documents() {
                     <div>
                       <div className="mono" style={{ fontSize: 11, color: accent, marginBottom: 4, fontWeight: 600 }}>{plan.id} · REV {plan.rev}</div>
                       <div className="plan-title" style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.3, color: "#E7ECF2" }}>{plan.title}</div>
-                      {plan.needsReview && (
+                      {plan.auditorViewedAt ? (
+                        <div className="plan-needs-review" style={{ marginTop: 8, color: "#2FD9A8", fontSize: 11.5, lineHeight: 1.35 }}>
+                          Este documento foi aprovado pelo Auditor
+                        </div>
+                      ) : plan.needsReview ? (
                         <div className="plan-needs-review" style={{ marginTop: 8, color: "#FFC24D", fontSize: 11.5, lineHeight: 1.35 }}>
                           Documento alterado. Este arquivo precisa ser revisado.
                         </div>
-                      )}
+                      ) : null}
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                       <span className="plan-category" style={{ fontSize: 9.5, padding: "2px 6px", borderRadius: 8, background: `${accent}1F`, color: accent }}>
@@ -147,8 +198,8 @@ export default function Documents() {
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 8, borderTop: "1px solid #1E2836" }}>
                       <div>
-                        <div className="plan-approved-by" style={{ fontSize: 11.5, color: plan.approvedBy === "Não identificado" ? "#FFC24D" : "#8FA0B3" }}>
-                         {plan.approvedBy === "Não identificado" ? "Pendente para aprovação" : `Aprovado por: ${plan.approvedBy}`}
+                        <div className="plan-approved-by" style={{ fontSize: 11.5, color: getDocumentStatus(plan).color, fontWeight: 600 }}>
+                          {getDocumentStatus(plan).label}
                         </div>
                         <div className="mono" style={{ fontSize: 10.5, color: "#56667A" }}>{plan.date}</div>
                       </div>

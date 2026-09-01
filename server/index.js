@@ -660,7 +660,7 @@ app.post("/api/non-conformities", verifyToken, async (req, res) => {
 
 // Tratar Não-Conformidade (Executada pelo perfil Operador)
 app.post("/api/non-conformities/:id/treat", verifyToken, async (req, res) => {
-  if (req.user.role !== 'operador' && req.user.role !== 'admin' && req.user.role !== 'auditor') {
+  if (req.user.role !== 'operador' && req.user.role !== 'operator' && req.user.role !== 'admin') {
     return res.status(403).json({ message: "Apenas operadores e administradores podem tratar não-conformidades." });
   }
   try {
@@ -763,6 +763,118 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.resolve(buildPath, 'index.html'));
   });
 }
+
+
+// Aprovar Revisão (Perfil Usuário)
+app.post("/api/documents/:id/user-approve", verifyToken, async (req, res) => {
+  if (req.user.role !== 'user' && req.user.role !== 'admin') {
+    return res.status(403).json({ message: "Apenas usuários e administradores podem aprovar revisões." });
+  }
+  try {
+    const document = await prisma.document.findUnique({ where: { id: req.params.id } });
+    if (!document) return res.status(404).json({ message: "Documento não encontrado." });
+    if (document.needsReview) {
+      return res.status(400).json({ message: "Aguarde até que o operador conclua a revisão." });
+    }
+
+    const updated = await prisma.document.update({
+      where: { id: req.params.id },
+      data: {
+        approvedBy: req.user.name,
+        userApprovalStatus: "Aprovado"
+      }
+    });
+
+    const today = new Date();
+    await appendAuditLog({
+      key: `doc-approve|${document.id}|${today.getTime()}`,
+      type: "Aprovação",
+      documentId: document.id,
+      documentName: document.title,
+      actor: req.user.name,
+      date: today,
+      status: "Aprovado",
+      details: `Revisão aprovada pelo usuário: ${req.user.name}`
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: "Erro ao aprovar revisão." });
+  }
+});
+
+// Desaprovar Revisão (Perfil Usuário)
+app.post("/api/documents/:id/user-disapprove", verifyToken, async (req, res) => {
+  if (req.user.role !== 'user' && req.user.role !== 'admin') {
+    return res.status(403).json({ message: "Apenas usuários e administradores podem desaprovar revisões." });
+  }
+  try {
+    const document = await prisma.document.findUnique({ where: { id: req.params.id } });
+    if (!document) return res.status(404).json({ message: "Documento não encontrado." });
+
+    const updated = await prisma.document.update({
+      where: { id: req.params.id },
+      data: {
+        needsReview: true,
+        userApprovalStatus: "Desaprovado",
+        approvedBy: "Não identificado"
+      }
+    });
+
+    const today = new Date();
+    await appendAuditLog({
+      key: `doc-disapprove|${document.id}|${today.getTime()}`,
+      type: "Desaprovação",
+      documentId: document.id,
+      documentName: document.title,
+      actor: req.user.name,
+      date: today,
+      status: "Desaprovado",
+      details: `Revisão desaprovada pelo usuário: ${req.user.name}. Documento retornou para revisão operacional.`
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: "Erro ao desaprovar revisão." });
+  }
+});
+
+// Marcar Documento como Visualizado pelo Auditor
+app.post("/api/documents/:id/auditor-viewed", verifyToken, async (req, res) => {
+  if (req.user.role !== 'auditor' && req.user.role !== 'admin') {
+    return res.status(403).json({ message: "Apenas auditores e administradores podem marcar como visualizado." });
+  }
+  try {
+    const document = await prisma.document.findUnique({ where: { id: req.params.id } });
+    if (!document) return res.status(404).json({ message: "Documento não encontrado." });
+
+    const today = new Date();
+    const formattedDate = formatAuditDate(today);
+
+    const updated = await prisma.document.update({
+      where: { id: req.params.id },
+      data: {
+        auditorViewedAt: formattedDate,
+        auditViewedBy: req.user.name
+      }
+    });
+
+    await appendAuditLog({
+      key: `audit-view|${document.id}|${today.getTime()}`,
+      type: "Auditoria",
+      documentId: document.id,
+      documentName: document.title,
+      actor: req.user.name,
+      date: today,
+      status: "Visualizado",
+      details: `Documento visualizado e aprovado pelo auditor: ${req.user.name}`
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: "Erro ao marcar como visualizado." });
+  }
+});
 
 app.listen(port, () => {
   console.log(`API SGI documental disponível em http://localhost:${port}`);

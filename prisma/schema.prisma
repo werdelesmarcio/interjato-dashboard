@@ -18,19 +18,24 @@ model User {
 }
 
 model Document {
-  id           String   @id
-  title        String
-  category     String
-  icon         String
-  rev          String
-  date         String
-  approvedBy   String   @default("Não identificado")
-  approverRole String?
-  needsReview  Boolean  @default(true)
-  contentHtml  String
-  sourceFile   String
-  sourceHash   String
-  updatedAt    DateTime @updatedAt
+  id                      String   @id
+  title                   String
+  category                String
+  icon                    String
+  rev                     String
+  date                    String
+  approvedBy              String   @default("Não identificado")
+  approverRole            String?
+  needsReview             Boolean  @default(true)
+  userApprovalStatus      String   @default("Pendente") // "Pendente", "Aprovado", "Desaprovado"
+  auditorViewedAt         String?
+  auditViewedBy           String?
+  hasNonConformity        Boolean  @default(false)
+  nonConformityResolvedAt String?
+  contentHtml             String
+  sourceFile              String
+  sourceHash              String
+  updatedAt               DateTime @updatedAt
 }
 
 model AuditLog {

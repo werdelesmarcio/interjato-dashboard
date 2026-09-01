@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { X, ExternalLink, FileText, AlignLeft } from "lucide-react";
+import { useEffect, useState, useContext } from "react";
+import { X, ExternalLink, FileText, AlignLeft, CheckCircle2, XCircle } from "lucide-react";
+import { DashboardContext } from './Dashboard';
 
 // Utilitários mantidos locais para o componente ficar autônomo, como nos demais.
 const CATEGORY_ACCENT = {
@@ -61,6 +62,7 @@ const TabButton = ({ active, icon: Icon, children, onClick }) => (
 
 export default function DocumentViewer({ document: doc, onClose }) {
   const [tab, setTab] = useState("pdf");
+  const { user, approveDocumentByUser, disapproveDocumentByUser, markDocumentViewedByAuditor } = useContext(DashboardContext);
 
   useEffect(() => {
     if (!doc) return undefined;
@@ -123,6 +125,52 @@ export default function DocumentViewer({ document: doc, onClose }) {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            {/* Botões de Aprovação/Desaprovação (Perfil Usuário) */}
+            {user?.role === 'user' && !doc.needsReview && doc.approvedBy === "Não identificado" && (
+              <>
+                <button
+                  onClick={() => approveDocumentByUser(doc.id)}
+                  title="Aprovar Revisão"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6, textDecoration: "none",
+                    background: "#2FD9A8", border: "none", color: "#0A0E13",
+                    borderRadius: 8, padding: "8px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer"
+                  }}
+                >
+                  <CheckCircle2 size={14} />
+                  <span>Aprovar Revisão</span>
+                </button>
+                <button
+                  onClick={() => disapproveDocumentByUser(doc.id)}
+                  title="Desaprovar Revisão"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6, textDecoration: "none",
+                    background: "#FF5D5D", border: "none", color: "#fff",
+                    borderRadius: 8, padding: "8px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer"
+                  }}
+                >
+                  <XCircle size={14} />
+                  <span>Desaprovar</span>
+                </button>
+              </>
+            )}
+
+            {/* Botão Visualizado pelo Auditor (Perfil Auditor) */}
+            {user?.role === 'auditor' && doc.approvedBy !== "Não identificado" && !doc.auditorViewedAt && (
+              <button
+                onClick={() => markDocumentViewedByAuditor(doc.id)}
+                title="Marcar como Visualizado"
+                style={{
+                  display: "flex", alignItems: "center", gap: 6, textDecoration: "none",
+                  background: "#2FD9A8", border: "none", color: "#0A0E13",
+                  borderRadius: 8, padding: "8px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer"
+                }}
+              >
+                <CheckCircle2 size={14} />
+                <span>Visualizado</span>
+              </button>
+            )}
+
             <a
               href={fileUrl}
               target="_blank"

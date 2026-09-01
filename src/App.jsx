@@ -96,7 +96,7 @@ function App() {
           <Route path="documents" element={<Documents />} />
           <Route path="users" element={user && user.role === 'admin' ? <Users /> : <Navigate to="/dashboard" />} />
           <Route path="profile" element={<Profile />} />
-          <Route path="non-conformities" element={<NonConformities />} />
+          <Route path="non-conformities" element={<NonConformities user={user} />} />
           <Route path="logs" element={<Logs />} />
         </Route>
         

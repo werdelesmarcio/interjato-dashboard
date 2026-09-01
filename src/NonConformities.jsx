@@ -187,35 +187,48 @@ export default function NonConformities({ user: propUser }) {
                   )}
                 </td>
                 <td>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {/* Botão "Ajustar NC" - Apenas Operadores e Admin */}
                     {nc.status === 'Pendente' && (user?.role === 'operador' || user?.role === 'operator' || user?.role === 'admin') && (
                       <button 
                         onClick={() => setTreatingNc(nc)}
                         className="add-user-button"
-                        style={{ padding: '6px 12px', fontSize: '11px', background: '#FF8F3D', border: 'none', borderRadius: '6px', color: '#1A1006', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        style={{ padding: '6px 12px', fontSize: '11px', background: '#FF8F3D', border: 'none', borderRadius: '6px', color: '#1A1006', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}
                       >
                         <CheckCircle2 size={13} />
                         Ajustar NC
                       </button>
                     )}
+                    
+                    {/* Botão "Aprovar alterações" - Apenas Usuários e Admin */}
                     {nc.status === 'Tratada' && (user?.role === 'user' || user?.role === 'admin') && (
                       <button 
                         onClick={() => handleApproveTreatment(nc.id)}
                         className="add-user-button"
-                        style={{ padding: '6px 12px', fontSize: '11px', background: '#2FD9A8', border: 'none', borderRadius: '6px', color: '#1A2633', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        style={{ padding: '6px 12px', fontSize: '11px', background: '#2FD9A8', border: 'none', borderRadius: '6px', color: '#1A2633', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}
                       >
                         <ClipboardCheck size={13} />
-                        Aprovar alterações nas não-conformidades
+                        Aprovar alterações
                       </button>
                     )}
+                    
+                    {/* Mensagens informativos para quem não pode fazer ações */}
                     {nc.status === 'Pendente' && (user?.role === 'user' || user?.role === 'auditor') && (
-                      <span style={{ color: '#56667A', fontSize: '11.5px' }}>Sob análise do Operador</span>
+                      <span style={{ color: '#56667A', fontSize: '11px', fontStyle: 'italic' }}>Sob análise do Operador</span>
                     )}
+                    
                     {nc.status === 'Tratada' && (user?.role === 'operador' || user?.role === 'operator') && (
-                      <span style={{ color: '#8FA0B3', fontSize: '11.5px' }}>Aguardando aprovação de Usuário</span>
+                      <span style={{ color: '#FFC24D', fontSize: '11px', fontStyle: 'italic' }}>Aguardando aprovação de Usuário</span>
                     )}
+                    
+                    {nc.status === 'Tratada' && (user?.role === 'auditor') && (
+                      <span style={{ color: '#8FA0B3', fontSize: '11px', fontStyle: 'italic' }}>Sob análise do Usuário</span>
+                    )}
+                    
                     {nc.status === 'Aprovada' && (
-                      <span style={{ color: '#2FD9A8', fontSize: '11.5px', fontWeight: 600 }}>✓ Solucionada</span>
+                      <span style={{ color: '#2FD9A8', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        ✓ Solucionada
+                      </span>
                     )}
                   </div>
                 </td>
