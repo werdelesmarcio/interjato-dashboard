@@ -109,8 +109,13 @@ if [ "${ENVIRONMENT}" = "prod" ]; then
     echo ""
 fi
 
-# PASSO 9: Iniciar servidor
-echo -e "${GREEN}🚀 PASSO 9: Iniciando servidor...${NC}"
+# PASSO 9: Inicializar Admin (se não existir)
+echo -e "${GREEN}👤 PASSO 9: Verificando usuário administrador...${NC}"
+node init-admin.js
+echo ""
+
+# PASSO 10: Iniciar servidor
+echo -e "${GREEN}🚀 PASSO 10: Iniciando servidor...${NC}"
 
 if [ "${ENVIRONMENT}" = "prod" ]; then
     if command -v pm2 &> /dev/null; then
@@ -130,9 +135,9 @@ fi
 
 echo ""
 
-# PASSO 10: Testar saúde do servidor
+# PASSO 11: Testar saúde do servidor
 if [ "${ENVIRONMENT}" = "prod" ]; then
-    echo -e "${GREEN}🏥 PASSO 10: Testando saúde do servidor...${NC}"
+    echo -e "${GREEN}🏥 PASSO 11: Testando saúde do servidor...${NC}"
     sleep 2
     
     HEALTH_CHECK=$(curl -s http://localhost:3001/api/health || echo '{"ok":false}')

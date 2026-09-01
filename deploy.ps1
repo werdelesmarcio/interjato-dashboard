@@ -225,9 +225,23 @@ if ($Environment -eq "prod") {
 }
 
 # ===================================
-# PASSO 9: Iniciar Servidor
+# PASSO 9: Inicializar Admin (se não existir)
 # ===================================
-Write-Step 9 "Iniciando servidor..."
+Write-Step 9 "Verificando usuário administrador..."
+
+try {
+    & node init-admin.js 2>&1 | Out-Null
+    Write-Success "Inicialização de admin concluída"
+} catch {
+    Write-Warning "Erro ao inicializar admin: $_"
+}
+
+Write-Host ""
+
+# ===================================
+# PASSO 10: Iniciar Servidor
+# ===================================
+Write-Step 10 "Iniciando servidor..."
 
 if ($Environment -eq "prod") {
     try {
@@ -254,10 +268,10 @@ if ($Environment -eq "prod") {
 Write-Host ""
 
 # ===================================
-# PASSO 10: Testar Saúde
+# PASSO 11: Testar Saúde
 # ===================================
 if ($Environment -eq "prod") {
-    Write-Step 10 "Testando saúde do servidor..."
+    Write-Step 11 "Testando saúde do servidor..."
     
     Start-Sleep -Seconds 2
     
