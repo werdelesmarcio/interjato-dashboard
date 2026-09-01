@@ -883,9 +883,14 @@ app.post("/api/documents/:id/auditor-viewed", verifyToken, async (req, res) => {
 // Servir arquivos estáticos do frontend compilado
 app.use(express.static(path.join(root, "dist")));
 
-// SPA Fallback: Qualquer rota não encontrada retorna index.html
-app.get("/*", (req, res) => {
-  res.sendFile(path.join(root, "dist", "index.html"));
+// SPA Fallback: Middleware para servir index.html em rotas não encontradas
+app.use((req, res) => {
+  // Se não for requisição para /api/, servir index.html
+  if (!req.path.startsWith("/api/")) {
+    res.sendFile(path.join(root, "dist", "index.html"));
+  } else {
+    res.status(404).json({ message: "Endpoint não encontrado" });
+  }
 });
 
 app.listen(port, () => {
